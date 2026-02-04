@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ menu.name }} - Digital Menu{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100" x-data="{ showCategoryModal: false, showItemModal: false, selectedCategory: null }">
+    {% include 'dashboard/partials/sidebar.html' %}
+    
+    <div class="lg:pl-64">
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-8">
+            <div class="flex items-center">
+                <a href="{% url 'menu-list' %}" class="mr-4 text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+                <h1 class="text-xl font-semibold text-gray-900">{{ menu.name }}</h1>
+            </div>
+            <button @click="showCategoryModal = true" class="inline-flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Category
+            </button>
+        </header>
+        
+        {% if messages %}
+        <div class="px-4 lg:px-8 pt-4">
+            {% for message in messages %}
+            <div class="mb-2 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <main class="p-4 lg:p-8">
+            {% if categories %}
+            <div class="space-y-6">
+                {% for category in categories %}
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">{{ category.name }}</h3>
+                        <button @click="selectedCategory = '{{ category.id }}'; showItemModal = true" 
+                                class="inline-flex items-center px-3 py-1.5 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Item
+                        </button>
+                    </div>
+                    
+                    {% if category.items.all %}
+                    <div class="divide-y divide-gray-100">
+                        {% for item in category.items.all %}
+                        <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                            <div class="flex items-center">
+                                {% if item.image %}
+                                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-16 h-16 object-cover rounded-lg mr-4">
+                                {% else %}
+                                <div class="w-16 h-16 bg-gray-200 rounded-lg mr-4 flex items-center justify-center">
+                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-900">{{ item.name }}</h4>
+                                    <p class="text-sm text-gray-500">{{ item.description|truncatewords:15|default:"" }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-lg font-semibold text-gray-900">${{ item.price|floatformat:2 }}</span>
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {% if item.is_available %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {% if item.is_available %}Available{% else %}Unavailable{% endif %}
+                                </span>
+                                <a href="{% url 'menu-item-edit' menu_id=menu.id item_id=item.id %}" class="text-primary-500 hover:text-primary-600">
+                                    Edit
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="px-6 py-8 text-center text-gray-500">
+                        <p>No items in this category yet.</p>
+                        <button @click="selectedCategory = '{{ category.id }}'; showItemModal = true" 
+                                class="mt-2 text-primary-500 hover:text-primary-600">
+                            Add your first item
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl shadow-sm p-8 text-center">
+                <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">No categories yet</h2>
+                <p class="text-gray-600 mb-6">Start by creating categories to organize your menu items.</p>
+                <button @click="showCategoryModal = true" class="inline-flex items-center px-6 py-3 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Category
+                </button>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+    
+    <!-- Add Category Modal -->
+    <div x-show="showCategoryModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div @click="showCategoryModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+                <form method="post" action="{% url 'category-create' menu_id=menu.id %}">
+                    {% csrf_token %}
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Add Category</h3>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <div>
+                            <label for="cat_name" class="block text-sm font-medium text-gray-700 mb-1">Category Name *</label>
+                            <input type="text" name="name" id="cat_name" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                   placeholder="e.g., Appetizers, Main Course">
+                        </div>
+                        <div>
+                            <label for="cat_desc" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea name="description" id="cat_desc" rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" @click="showCategoryModal = false" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Add Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Item Modal -->
+    <div x-show="showItemModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div @click="showItemModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+                <form method="post" :action="'/dashboard/menus/{{ menu.id }}/category/' + selectedCategory + '/item/create/'" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Add Menu Item</h3>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <div>
+                            <label for="item_name" class="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                            <input type="text" name="name" id="item_name" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="item_desc" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea name="description" id="item_desc" rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+                        </div>
+                        <div>
+                            <label for="item_price" class="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                            <input type="number" name="price" id="item_price" step="0.01" min="0" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="item_image" class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                            <input type="file" name="image" id="item_image" accept="image/*"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" @click="showItemModal = false" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Add Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

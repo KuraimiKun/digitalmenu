@@ -1,0 +1,97 @@
+version: '3.8'
+
+# Development override for docker-compose
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  db:
+    ports:
+      - "5433:5432"
+
+  redis:
+    ports:
+      - "6380:6379"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+    ports:
+      - "8000:8000"
+    # Enable auto-reload
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - .git/
+            - __pycache__/
+            - "*.pyc"
+            - .env
+        - action: rebuild
+          path: requirements.txt
+
+  celery_worker:
+    command: celery -A digitalmenu worker -l DEBUG
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+
+  celery_beat:
+    command: celery -A digitalmenu beat -l DEBUG
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+
+  # Disable nginx in development
+  nginx:
+    profiles:
+      - production
+
+  # Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog
+    container_name: digitalmenu_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - digitalmenu_network
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: digitalmenu_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@digitalmenu.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - digitalmenu_network
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander
+    container_name: digitalmenu_redis_commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - digitalmenu_network

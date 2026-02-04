@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Restaurant Settings - Digital Menu{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100">
+    {% include 'dashboard/partials/sidebar.html' %}
+    
+    <div class="lg:pl-64">
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-8">
+            <h1 class="text-xl font-semibold text-gray-900">Restaurant Settings</h1>
+        </header>
+        
+        {% if messages %}
+        <div class="px-4 lg:px-8 pt-4">
+            {% for message in messages %}
+            <div class="mb-2 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <main class="p-4 lg:p-8">
+            <div class="max-w-4xl mx-auto">
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Info -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Restaurant Name *</label>
+                                <input type="text" id="name" name="name" required value="{{ restaurant.name }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea id="description" name="description" rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">{{ restaurant.description|default:"" }}</textarea>
+                            </div>
+                            
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" value="{{ restaurant.phone|default:"" }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                            
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="email" name="email" value="{{ restaurant.email|default:"" }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                            
+                            <div>
+                                <label for="website" class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                                <input type="url" id="website" name="website" value="{{ restaurant.website|default:"" }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                       placeholder="https://www.example.com">
+                            </div>
+                            
+                            <div>
+                                <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                                <select id="currency" name="currency"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                    <option value="USD" {% if restaurant.default_currency == 'USD' %}selected{% endif %}>USD - US Dollar ($)</option>
+                                    <option value="EUR" {% if restaurant.default_currency == 'EUR' %}selected{% endif %}>EUR - Euro (€)</option>
+                                    <option value="GBP" {% if restaurant.default_currency == 'GBP' %}selected{% endif %}>GBP - British Pound (£)</option>
+                                    <option value="TRY" {% if restaurant.default_currency == 'TRY' %}selected{% endif %}>TRY - Turkish Lira (₺)</option>
+                                    <option value="CAD" {% if restaurant.default_currency == 'CAD' %}selected{% endif %}>CAD - Canadian Dollar (C$)</option>
+                                    <option value="AUD" {% if restaurant.default_currency == 'AUD' %}selected{% endif %}>AUD - Australian Dollar (A$)</option>
+                                    <option value="JPY" {% if restaurant.default_currency == 'JPY' %}selected{% endif %}>JPY - Japanese Yen (¥)</option>
+                                    <option value="INR" {% if restaurant.default_currency == 'INR' %}selected{% endif %}>INR - Indian Rupee (₹)</option>
+                                    <option value="AED" {% if restaurant.default_currency == 'AED' %}selected{% endif %}>AED - UAE Dirham (د.إ)</option>
+                                    <option value="SAR" {% if restaurant.default_currency == 'SAR' %}selected{% endif %}>SAR - Saudi Riyal (﷼)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Address -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Address</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+                                <textarea id="address" name="address" rows="2"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">{{ restaurant.address|default:"" }}</textarea>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                    <input type="text" id="city" name="city" value="{{ restaurant.city|default:"" }}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                                <div>
+                                    <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State/Province</label>
+                                    <input type="text" id="state" name="state" value="{{ restaurant.state|default:"" }}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                                <div>
+                                    <label for="country" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                    <input type="text" id="country" name="country" value="{{ restaurant.country|default:"" }}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Branding -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Branding</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="logo" class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+                                {% if restaurant.logo %}
+                                <div class="mb-2">
+                                    <img src="{{ restaurant.logo.url }}" alt="Logo" class="h-16 w-16 rounded-lg object-cover">
+                                </div>
+                                {% endif %}
+                                <input type="file" id="logo" name="logo" accept="image/*"
+                                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                            </div>
+                            
+                            <div>
+                                <label for="cover_image" class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
+                                {% if restaurant.cover_image %}
+                                <div class="mb-2">
+                                    <img src="{{ restaurant.cover_image.url }}" alt="Cover" class="h-16 w-32 rounded-lg object-cover">
+                                </div>
+                                {% endif %}
+                                <input type="file" id="cover_image" name="cover_image" accept="image/*"
+                                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                            </div>
+                            
+                            <div>
+                                <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="color" id="primary_color" name="primary_color" 
+                                           value="{{ restaurant.primary_color|default:'#3B82F6' }}"
+                                           class="w-12 h-10 rounded cursor-pointer">
+                                    <input type="text" id="primary_color_text" value="{{ restaurant.primary_color|default:'#3B82F6' }}"
+                                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                           pattern="^#[0-9A-Fa-f]{6}$">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="secondary_color" class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="color" id="secondary_color" name="secondary_color" 
+                                           value="{{ restaurant.secondary_color|default:'#10B981' }}"
+                                           class="w-12 h-10 rounded cursor-pointer">
+                                    <input type="text" id="secondary_color_text" value="{{ restaurant.secondary_color|default:'#10B981' }}"
+                                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                           pattern="^#[0-9A-Fa-f]{6}$">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Settings</h2>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between py-2">
+                                <div>
+                                    <label for="is_active" class="text-sm font-medium text-gray-700">Restaurant Active</label>
+                                    <p class="text-xs text-gray-500">When disabled, customers cannot view or order from your menu</p>
+                                </div>
+                                <input type="checkbox" id="is_active" name="is_active" {% if restaurant.is_active %}checked{% endif %}
+                                       class="h-5 w-5 text-primary-500 focus:ring-primary-500 border-gray-300 rounded">
+                            </div>
+                            
+                            <div class="flex items-center justify-between py-2">
+                                <div>
+                                    <label for="ordering_enabled" class="text-sm font-medium text-gray-700">Online Ordering</label>
+                                    <p class="text-xs text-gray-500">Allow customers to place orders through the digital menu</p>
+                                </div>
+                                <input type="checkbox" id="ordering_enabled" name="ordering_enabled" {% if restaurant.ordering_enabled %}checked{% endif %}
+                                       class="h-5 w-5 text-primary-500 focus:ring-primary-500 border-gray-300 rounded">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <a href="{% url 'dashboard' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-medium">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+// Sync color pickers with text inputs
+document.getElementById('primary_color').addEventListener('input', function() {
+    document.getElementById('primary_color_text').value = this.value;
+});
+document.getElementById('primary_color_text').addEventListener('input', function() {
+    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+        document.getElementById('primary_color').value = this.value;
+    }
+});
+document.getElementById('secondary_color').addEventListener('input', function() {
+    document.getElementById('secondary_color_text').value = this.value;
+});
+document.getElementById('secondary_color_text').addEventListener('input', function() {
+    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+        document.getElementById('secondary_color').value = this.value;
+    }
+});
+</script>
+{% endblock %}

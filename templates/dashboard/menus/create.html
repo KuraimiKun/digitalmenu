@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Menu - Digital Menu{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100 py-12">
+    <div class="max-w-2xl mx-auto px-4">
+        <div class="bg-white rounded-xl shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h1 class="text-xl font-semibold text-gray-900">Create New Menu</h1>
+                <p class="text-sm text-gray-500 mt-1">Create a menu for {{ restaurant.name }}</p>
+            </div>
+            
+            <form method="post" class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Menu Name *</label>
+                    <input type="text" name="name" id="name" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                           placeholder="e.g., Lunch Menu, Dinner Menu">
+                </div>
+                
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" id="description" rows="3"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                              placeholder="Describe this menu..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <a href="{% url 'menu-list' %}" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition">
+                        Create Menu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

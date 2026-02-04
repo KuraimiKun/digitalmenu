@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ location.name }} - {{ restaurant.name }}{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header with image -->
+    <div class="relative h-48 bg-gradient-to-r from-primary-600 to-primary-800">
+        {% if restaurant.cover_image %}
+        <img src="{{ restaurant.cover_image.url }}" alt="{{ restaurant.name }}" class="absolute inset-0 w-full h-full object-cover opacity-50">
+        {% endif %}
+        <div class="absolute inset-0 flex items-end">
+            <div class="max-w-2xl mx-auto px-4 pb-6 w-full">
+                <div class="flex items-end space-x-4">
+                    {% if restaurant.logo %}
+                    <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" 
+                         class="h-20 w-20 rounded-lg object-cover border-4 border-white shadow-lg -mb-10">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Content -->
+    <div class="max-w-2xl mx-auto px-4 pt-14 pb-8">
+        <h1 class="text-2xl font-bold text-gray-900">{{ restaurant.name }}</h1>
+        <p class="text-gray-500">{{ location.name }}</p>
+        
+        <!-- Quick actions -->
+        <div class="mt-6 flex space-x-4">
+            <a href="tel:{{ location.phone }}" class="flex-1 bg-primary-600 text-white py-3 rounded-lg text-center font-semibold hover:bg-primary-700 transition">
+                <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                Call
+            </a>
+            <a href="https://maps.google.com/?q={{ location.latitude }},{{ location.longitude }}" 
+               target="_blank"
+               class="flex-1 bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg text-center font-semibold hover:border-primary-500 transition">
+                <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                </svg>
+                Directions
+            </a>
+        </div>
+        
+        <!-- Info cards -->
+        <div class="mt-8 space-y-4">
+            <!-- Address -->
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <h3 class="font-semibold text-gray-900 mb-2">Address</h3>
+                <p class="text-gray-600">{{ location.address }}</p>
+                {% if location.city %}
+                <p class="text-gray-600">{{ location.city }}{% if location.state %}, {{ location.state }}{% endif %} {{ location.postal_code }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Hours -->
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <h3 class="font-semibold text-gray-900 mb-2">Hours</h3>
+                <div class="space-y-1 text-sm">
+                    {% for hours in location.operating_hours.all %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">{{ hours.get_day_of_week_display }}</span>
+                        <span class="text-gray-900">
+                            {% if hours.is_closed %}
+                            Closed
+                            {% else %}
+                            {{ hours.open_time|time:"g:i A" }} - {{ hours.close_time|time:"g:i A" }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Contact -->
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <h3 class="font-semibold text-gray-900 mb-2">Contact</h3>
+                <div class="space-y-2">
+                    {% if location.phone %}
+                    <div class="flex items-center text-gray-600">
+                        <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        <a href="tel:{{ location.phone }}" class="text-primary-600 hover:underline">{{ location.phone }}</a>
+                    </div>
+                    {% endif %}
+                    {% if location.email %}
+                    <div class="flex items-center text-gray-600">
+                        <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <a href="mailto:{{ location.email }}" class="text-primary-600 hover:underline">{{ location.email }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- View Menu CTA -->
+        <div class="mt-8">
+            <a href="/m/{{ qr_code.short_code }}/" 
+               class="block w-full bg-primary-600 text-white text-center py-4 rounded-lg font-semibold text-lg hover:bg-primary-700 transition">
+                View Our Menu
+            </a>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="py-8 text-center text-sm text-gray-500">
+        Powered by <a href="/" class="text-primary-600 hover:underline">Digital Menu</a>
+    </footer>
+</div>
+{% endblock %}

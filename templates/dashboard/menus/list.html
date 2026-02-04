@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Menus - Digital Menu{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100">
+    {% include 'dashboard/partials/sidebar.html' %}
+    
+    <div class="lg:pl-64">
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-8">
+            <h1 class="text-xl font-semibold text-gray-900">Menus</h1>
+            <a href="{% url 'menu-create' %}" class="inline-flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                New Menu
+            </a>
+        </header>
+        
+        {% if messages %}
+        <div class="px-4 lg:px-8 pt-4">
+            {% for message in messages %}
+            <div class="mb-2 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <main class="p-4 lg:p-8">
+            {% if menus %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for menu in menus %}
+                <a href="{% url 'menu-detail' menu_id=menu.id %}" class="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ menu.name }}</h3>
+                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {% if menu.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if menu.is_active %}Active{% else %}Draft{% endif %}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">{{ menu.description|truncatewords:20|default:"No description" }}</p>
+                        <div class="flex items-center text-sm text-gray-400">
+                            <span>{{ menu.categories.count }} categories</span>
+                            <span class="mx-2">•</span>
+                            <span>Updated {{ menu.updated_at|timesince }} ago</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl shadow-sm p-8 text-center">
+                <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">No menus yet</h2>
+                <p class="text-gray-600 mb-6">Create your first menu to start adding items.</p>
+                <a href="{% url 'menu-create' %}" class="inline-flex items-center px-6 py-3 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create Menu
+                </a>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

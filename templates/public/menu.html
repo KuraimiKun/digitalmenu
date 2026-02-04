@@ -1,0 +1,1116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ menu.name|default:"Menu" }} - {{ restaurant.name }}</title>
+    <meta name="description" content="{{ restaurant.description|truncatewords:30 }}">
+    <meta name="theme-color" content="{{ theme.primary_color|default:'#E11D48' }}">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ menu.name|default:'Menu' }} - {{ restaurant.name }}">
+    <meta property="og:description" content="{{ restaurant.description|truncatewords:20 }}">
+    {% if restaurant.cover_image %}
+    <meta property="og:image" content="{{ restaurant.cover_image.url }}">
+    {% endif %}
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% if theme.get_google_fonts_url %}
+    <link href="{{ theme.get_google_fonts_url }}" rel="stylesheet">
+    {% endif %}
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        heading: ['{{ theme.heading_font|default:"Playfair Display" }}', 'serif'],
+                        body: ['{{ theme.body_font|default:"Inter" }}', 'sans-serif'],
+                        price: ['{{ theme.price_font|default:"DM Sans" }}', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '{{ theme.primary_color|default:"#E11D48" }}',
+                        secondary: '{{ theme.secondary_color|default:"#1E293B" }}',
+                        accent: '{{ theme.accent_color|default:"#F59E0B" }}',
+                        surface: '{{ theme.surface_color|default:"#F8FAFC" }}',
+                        'card-bg': '{{ theme.card_background|default:"#FFFFFF" }}',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <style>
+        :root {
+            --primary: {{ theme.primary_color|default:'#E11D48' }};
+            --secondary: {{ theme.secondary_color|default:'#1E293B' }};
+            --accent: {{ theme.accent_color|default:'#F59E0B' }};
+            --background: {{ theme.background_color|default:'#FFFFFF' }};
+            --surface: {{ theme.surface_color|default:'#F8FAFC' }};
+            --card-bg: {{ theme.card_background|default:'#FFFFFF' }};
+            --text-primary: {{ theme.text_primary|default:'#0F172A' }};
+            --text-secondary: {{ theme.text_secondary|default:'#64748B' }};
+            --text-on-primary: {{ theme.text_on_primary|default:'#FFFFFF' }};
+            --border-radius: {{ theme.border_radius|default:'1rem' }};
+            --card-shadow: {{ theme.card_shadow|default:'0 4px 20px rgba(0,0,0,0.08)' }};
+            --hero-height: {{ theme.hero_height|default:'60vh' }};
+        }
+        
+        [x-cloak] { display: none !important; }
+        
+        body {
+            font-family: '{{ theme.body_font|default:"Inter" }}', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+        }
+        
+        .font-heading {
+            font-family: '{{ theme.heading_font|default:"Playfair Display" }}', serif;
+        }
+        
+        .font-price {
+            font-family: '{{ theme.price_font|default:"DM Sans" }}', sans-serif;
+        }
+        
+        /* Hero Section */
+        .hero-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+        
+        .hero-overlay {
+            background: linear-gradient(to bottom, 
+                rgba(0,0,0,0.{{ theme.hero_overlay_opacity|default:40 }}) 0%,
+                rgba(0,0,0,0.6) 100%
+            );
+        }
+        
+        /* Card Styles */
+        {% if theme.card_style == 'glassmorphism' %}
+        .menu-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        {% elif theme.card_style == 'neumorphism' %}
+        .menu-card {
+            background: var(--surface);
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.08), -8px -8px 16px rgba(255,255,255,0.8);
+            border: none;
+        }
+        {% elif theme.card_style == 'bordered' %}
+        .menu-card {
+            background: var(--card-bg);
+            border: 2px solid var(--primary);
+            box-shadow: none;
+        }
+        {% elif theme.card_style == 'flat' %}
+        .menu-card {
+            background: var(--surface);
+            border: none;
+            box-shadow: none;
+        }
+        {% else %}
+        .menu-card {
+            background: var(--card-bg);
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        {% endif %}
+        
+        .menu-card {
+            border-radius: var(--border-radius);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .menu-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        }
+        
+        /* Badge Styles */
+        .badge-popular {
+            background: linear-gradient(135deg, var(--accent), #F97316);
+            color: white;
+            animation: pulse-soft 2s infinite;
+        }
+        
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        /* Category Pills */
+        .category-pill {
+            transition: all 0.3s ease;
+        }
+        
+        .category-pill.active {
+            background: var(--primary);
+            color: var(--text-on-primary);
+            transform: scale(1.05);
+        }
+        
+        /* Price Tag */
+        .price-tag {
+            background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 80%, black));
+            color: var(--text-on-primary);
+            border-radius: 0.5rem;
+            padding: 0.375rem 0.75rem;
+        }
+        
+        /* Floating Cart */
+        .floating-cart {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        
+        /* Scroll indicator */
+        .scroll-indicator {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        /* Image Hover Effect */
+        .item-image-wrapper {
+            overflow: hidden;
+            border-radius: calc(var(--border-radius) - 0.25rem);
+        }
+        
+        .item-image-wrapper img {
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .menu-card:hover .item-image-wrapper img {
+            transform: scale(1.08);
+        }
+        
+        /* Search Bar */
+        .search-bar {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* Dark Mode Adjustments */
+        {% if theme.layout_style == 'dark' %}
+        body {
+            background: #0F172A;
+        }
+        .search-bar {
+            background: rgba(30, 41, 59, 0.9);
+        }
+        {% endif %}
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--surface);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: color-mix(in srgb, var(--primary) 80%, black);
+        }
+        
+        /* Line clamp */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Hide scrollbar for category nav */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        {% if theme.custom_css %}
+        {{ theme.custom_css|safe }}
+        {% endif %}
+    </style>
+</head>
+<body x-data="menuApp()" x-init="init()" class="antialiased">
+    
+    <!-- Hero Section -->
+    <header class="relative" style="min-height: var(--hero-height);">
+        {% if theme.hero_image or restaurant.cover_image %}
+        <div class="absolute inset-0">
+            <img src="{% if theme.hero_image %}{{ theme.hero_image.url }}{% else %}{{ restaurant.cover_image.url }}{% endif %}" 
+                 alt="{{ restaurant.name }}"
+                 class="w-full h-full object-cover">
+            <div class="hero-overlay absolute inset-0"></div>
+        </div>
+        {% elif theme.header_style == 'gradient' %}
+        <div class="absolute inset-0 hero-gradient"></div>
+        {% else %}
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, var(--secondary), var(--primary));"></div>
+        {% endif %}
+        
+        <div class="relative z-10 flex flex-col items-center justify-center text-center px-4 py-16" style="min-height: var(--hero-height);">
+            <!-- Restaurant Logo -->
+            {% if restaurant.logo %}
+            <div class="mb-6" data-aos="zoom-in" data-aos-duration="800">
+                <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" 
+                     class="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-white/30 shadow-2xl">
+            </div>
+            {% endif %}
+            
+            <!-- Restaurant Name -->
+            <h1 class="font-heading text-4xl md:text-6xl lg:text-7xl font-bold mb-4"
+                style="color: {{ theme.hero_text_color|default:'#FFFFFF' }};"
+                data-aos="fade-up" data-aos-delay="200">
+                {{ restaurant.name }}
+            </h1>
+            
+            <!-- Menu Name / Description -->
+            <p class="text-lg md:text-xl opacity-90 max-w-2xl mb-6"
+               style="color: {{ theme.hero_text_color|default:'#FFFFFF' }};"
+               data-aos="fade-up" data-aos-delay="400">
+                {{ menu.name|default:"Our Menu" }}
+                {% if restaurant.description %}
+                <span class="block text-sm md:text-base mt-2 opacity-75">{{ restaurant.description|truncatewords:15 }}</span>
+                {% endif %}
+            </p>
+            
+            <!-- Social Links -->
+            {% if restaurant.instagram_url or restaurant.facebook_url %}
+            <div class="flex space-x-4 mb-8" data-aos="fade-up" data-aos-delay="600">
+                {% if restaurant.instagram_url %}
+                <a href="{{ restaurant.instagram_url }}" target="_blank" 
+                   class="p-3 rounded-full bg-white/20 hover:bg-white/30 transition text-white">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                </a>
+                {% endif %}
+                {% if restaurant.facebook_url %}
+                <a href="{{ restaurant.facebook_url }}" target="_blank" 
+                   class="p-3 rounded-full bg-white/20 hover:bg-white/30 transition text-white">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Scroll Indicator -->
+            <div class="scroll-indicator absolute bottom-8" data-aos="fade-up" data-aos-delay="800">
+                <svg class="w-6 h-6" style="color: {{ theme.hero_text_color|default:'#FFFFFF' }};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                </svg>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Search & Categories Bar -->
+    <div class="sticky top-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-100" 
+         style="background: color-mix(in srgb, var(--background) 95%, transparent);">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <!-- Search -->
+            <div class="relative mb-4" data-aos="fade-up">
+                <input type="text" 
+                       x-model="searchQuery"
+                       placeholder="Search menu items..."
+                       class="w-full px-5 py-3 pl-12 rounded-full border-2 border-gray-100 focus:border-primary focus:outline-none transition search-bar"
+                       style="border-color: transparent;">
+                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            
+            <!-- Category Navigation -->
+            <nav class="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide" x-ref="categoryNav">
+                <button @click="activeCategory = null; scrollToTop()"
+                        :class="activeCategory === null ? 'active' : ''"
+                        class="category-pill whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-100 flex-shrink-0">
+                    All
+                </button>
+                {% for category in categories %}
+                <button @click="scrollToCategory('category-{{ category.id }}')"
+                        :class="activeCategory === 'category-{{ category.id }}' ? 'active' : ''"
+                        class="category-pill whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-100 flex-shrink-0">
+                    {% if category.image and category.image.name %}
+                    <img src="{{ category.image.url }}" class="w-5 h-5 rounded-full inline-block mr-2 object-cover">
+                    {% endif %}
+                    {{ category.name }}
+                </button>
+                {% endfor %}
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Menu Content -->
+    <main class="max-w-6xl mx-auto px-4 py-8 pb-32">
+        {% for category in categories %}
+        <section id="category-{{ category.id }}" class="mb-12 category-section" data-category-id="category-{{ category.id }}">
+            <!-- Category Header -->
+            <div class="mb-6" data-aos="fade-up">
+                <h2 class="font-heading text-2xl md:text-3xl font-bold mb-2" style="color: var(--secondary);">
+                    {{ category.name }}
+                </h2>
+                {% if category.description %}
+                <p class="text-gray-500">{{ category.description }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Menu Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for item in category.items.all %}
+                {% if item.status == 'available' %}
+                <div class="menu-card p-4 flex gap-4 cursor-pointer"
+                     x-show="matchesSearch('{{ item.name|escapejs }}', '{{ item.description|escapejs }}')"
+                     @click="openItemModal('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.description|escapejs }}', '{{ item.price }}', '{% if item.image and item.image.name %}{{ item.image.url }}{% endif %}', {{ item.is_popular|yesno:'true,false' }})"
+                     data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}0">
+                    
+                    <!-- Item Details -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start gap-2 mb-1">
+                            <h3 class="font-semibold text-lg leading-tight" style="color: var(--text-primary);">
+                                {{ item.name }}
+                            </h3>
+                            {% if item.is_popular %}
+                            <span class="badge-popular text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                                🔥 Popular
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if item.description %}
+                        <p class="text-sm line-clamp-2 mb-3" style="color: var(--text-secondary);">
+                            {{ item.description }}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Dietary Badges -->
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            {% if item.is_vegetarian %}
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">🥬 Vegetarian</span>
+                            {% endif %}
+                            {% if item.is_vegan %}
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">🌱 Vegan</span>
+                            {% endif %}
+                            {% if item.is_gluten_free %}
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">🌾 Gluten-Free</span>
+                            {% endif %}
+                            {% if item.is_spicy %}
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">🌶️ Spicy</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Price -->
+                        <div class="flex items-center gap-2">
+                            <span class="font-price font-bold text-lg price-tag">
+                                {{ currency_symbol }}{{ item.price }}
+                            </span>
+                            {% if item.original_price and item.original_price > item.price %}
+                            <span class="text-sm line-through text-gray-400">
+                                {{ currency_symbol }}{{ item.original_price }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Item Image -->
+                    {% if item.image and item.image.name %}
+                    <div class="item-image-wrapper flex-shrink-0 w-28 h-28 md:w-32 md:h-32">
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" 
+                             class="w-full h-full object-cover"
+                             loading="lazy">
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-400">No items in this category yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% empty %}
+        <div class="text-center py-16">
+            <svg class="w-24 h-24 mx-auto text-gray-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">Menu Coming Soon</h3>
+            <p class="text-gray-400">This restaurant is setting up their digital menu.</p>
+        </div>
+        {% endfor %}
+    </main>
+    
+    <!-- Floating Cart Button -->
+    <div class="fixed bottom-6 right-6 z-50" x-show="orderingEnabled && cart.length > 0" x-cloak>
+        <button @click="showCart = true" 
+                class="floating-cart flex items-center gap-3 px-6 py-4 rounded-full text-white font-semibold shadow-2xl transition hover:scale-105"
+                style="background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--secondary)));">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span x-text="cart.length + ' items'"></span>
+            <span class="font-bold" x-text="currencySymbol + cartTotal.toFixed(2)"></span>
+        </button>
+    </div>
+    
+    <!-- Item Detail Modal -->
+    <div x-show="selectedItem" x-cloak
+         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+         @keydown.escape.window="selectedItem = null">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+             @click="selectedItem = null"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-8"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             style="background: var(--card-bg);">
+            
+            <!-- Item Image -->
+            <div x-show="selectedItem?.image" class="relative h-64 overflow-hidden">
+                <img :src="selectedItem?.image" :alt="selectedItem?.name" 
+                     class="w-full h-full object-cover">
+                <button @click="selectedItem = null" 
+                        class="absolute top-4 right-4 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Item Info -->
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h3 class="font-heading text-2xl font-bold" x-text="selectedItem?.name" style="color: var(--text-primary);"></h3>
+                        <template x-if="selectedItem?.is_popular">
+                            <span class="badge-popular inline-block text-xs px-2 py-0.5 rounded-full font-medium mt-2">
+                                🔥 Popular Choice
+                            </span>
+                        </template>
+                    </div>
+                    <div class="price-tag text-lg font-bold" x-text="currencySymbol + selectedItem?.price"></div>
+                </div>
+                
+                <p class="text-gray-600 mb-6" x-text="selectedItem?.description"></p>
+                
+                <!-- Quantity Selector -->
+                <div class="flex items-center justify-between mb-6">
+                    <span class="font-medium">Quantity</span>
+                    <div class="flex items-center gap-4">
+                        <button @click="itemQuantity = Math.max(1, itemQuantity - 1)" 
+                                class="w-10 h-10 rounded-full flex items-center justify-center border-2 hover:border-primary transition"
+                                style="border-color: var(--primary); color: var(--primary);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                            </svg>
+                        </button>
+                        <span class="text-xl font-bold w-8 text-center" x-text="itemQuantity"></span>
+                        <button @click="itemQuantity++" 
+                                class="w-10 h-10 rounded-full flex items-center justify-center text-white transition hover:opacity-90"
+                                style="background: var(--primary);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Add to Cart Button -->
+                <template x-if="orderingEnabled">
+                <button @click="addToCart()" 
+                        class="w-full py-4 rounded-xl font-semibold text-white transition hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
+                        style="background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--secondary)));">
+                    Add to Order — <span x-text="currencySymbol + (selectedItem?.price * itemQuantity).toFixed(2)"></span>
+                </button>
+                </template>
+                <template x-if="!orderingEnabled">
+                <button disabled class="w-full py-4 rounded-xl font-semibold text-gray-500 bg-gray-200 cursor-not-allowed">
+                    Ordering Not Available
+                </button>
+                </template>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart Drawer -->
+    <div x-show="showCart" x-cloak
+         class="fixed inset-0 z-50"
+         @keydown.escape.window="showCart = false">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+             @click="showCart = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"></div>
+        
+        <!-- Cart Panel -->
+        <div class="absolute right-0 top-0 h-full w-full max-w-md shadow-2xl"
+             style="background: var(--background);"
+             x-transition:enter="transform transition ease-out duration-300"
+             x-transition:enter-start="translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transform transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full">
+            
+            <div class="flex flex-col h-full">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 border-b">
+                    <h2 class="font-heading text-2xl font-bold" style="color: var(--text-primary);">Your Order</h2>
+                    <button @click="showCart = false" 
+                            class="p-2 rounded-full hover:bg-gray-100 transition">
+                        <svg class="w-6 h-6" style="color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Cart Items -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <template x-if="cart.length === 0">
+                        <div class="text-center py-16">
+                            <svg class="w-20 h-20 mx-auto mb-4" style="color: var(--text-secondary); opacity: 0.3;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <p class="text-lg font-medium" style="color: var(--text-secondary);">Your cart is empty</p>
+                            <p class="text-sm mt-1 opacity-60" style="color: var(--text-secondary);">Add items to get started</p>
+                        </div>
+                    </template>
+                    
+                    <template x-for="(item, index) in cart" :key="index">
+                        <div class="flex items-center gap-4 py-4 border-b" style="border-color: var(--surface);">
+                            <div class="flex-1">
+                                <h4 class="font-semibold" x-text="item.name" style="color: var(--text-primary);"></h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <button @click="updateCartQuantity(index, -1)" class="w-7 h-7 rounded-full border flex items-center justify-center hover:bg-gray-100">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                        </svg>
+                                    </button>
+                                    <span class="text-sm font-medium w-6 text-center" x-text="item.quantity"></span>
+                                    <button @click="updateCartQuantity(index, 1)" class="w-7 h-7 rounded-full border flex items-center justify-center hover:bg-gray-100">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-bold" style="color: var(--primary);" x-text="currencySymbol + (item.price * item.quantity).toFixed(2)"></span>
+                            </div>
+                            <button @click="removeFromCart(index)" 
+                                    class="p-2 rounded-full text-red-500 hover:bg-red-50 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Footer -->
+                <div class="border-t p-6" style="border-color: var(--surface);">
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-lg" style="color: var(--text-secondary);">Subtotal</span>
+                        <span class="text-2xl font-bold" style="color: var(--text-primary);" x-text="currencySymbol + cartTotal.toFixed(2)"></span>
+                    </div>
+                    <button @click="showCart = false; showCheckout = true"
+                            class="w-full py-4 rounded-xl text-lg font-semibold text-white transition hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            :disabled="cart.length === 0"
+                            style="background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--secondary)));">
+                        Continue to Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Checkout Modal -->
+    <div x-show="showCheckout" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         @keydown.escape.window="showCheckout = false">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+             @click="showCheckout = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"></div>
+        
+        <!-- Checkout Panel -->
+        <div class="relative bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             style="background: var(--background);">
+            
+            <!-- Header -->
+            <div class="sticky top-0 flex items-center justify-between p-6 border-b" style="background: var(--background); border-color: var(--surface);">
+                <h2 class="font-heading text-2xl font-bold" style="color: var(--text-primary);">Checkout</h2>
+                <button @click="showCheckout = false" 
+                        class="p-2 rounded-full hover:bg-gray-100 transition">
+                    <svg class="w-6 h-6" style="color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Order Type -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-3" style="color: var(--text-primary);">Order Type</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button @click="checkoutData.orderType = 'dine_in'" 
+                                :class="checkoutData.orderType === 'dine_in' ? 'ring-2 ring-offset-2' : 'hover:bg-gray-50'"
+                                :style="checkoutData.orderType === 'dine_in' ? 'ring-color: var(--primary); background: var(--surface)' : ''"
+                                class="p-3 rounded-xl border text-center transition">
+                            <svg class="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18M3 9h18m-9 4v8m-7 0h14"/>
+                            </svg>
+                            <span class="text-sm font-medium">Dine In</span>
+                        </button>
+                        <button @click="checkoutData.orderType = 'pickup'" 
+                                :class="checkoutData.orderType === 'pickup' ? 'ring-2 ring-offset-2' : 'hover:bg-gray-50'"
+                                :style="checkoutData.orderType === 'pickup' ? 'ring-color: var(--primary); background: var(--surface)' : ''"
+                                class="p-3 rounded-xl border text-center transition">
+                            <svg class="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                            </svg>
+                            <span class="text-sm font-medium">Pickup</span>
+                        </button>
+                        <button @click="checkoutData.orderType = 'delivery'" 
+                                :class="checkoutData.orderType === 'delivery' ? 'ring-2 ring-offset-2' : 'hover:bg-gray-50'"
+                                :style="checkoutData.orderType === 'delivery' ? 'ring-color: var(--primary); background: var(--surface)' : ''"
+                                class="p-3 rounded-xl border text-center transition">
+                            <svg class="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span class="text-sm font-medium">Delivery</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Customer Info -->
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label for="customer_name" class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Your Name *</label>
+                        <input type="text" id="customer_name" x-model="checkoutData.name" required
+                               class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:outline-none transition"
+                               :style="'border-color: var(--surface); focus-ring-color: var(--primary)'"
+                               placeholder="Enter your name">
+                    </div>
+                    <div>
+                        <label for="customer_phone" class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Phone Number *</label>
+                        <input type="tel" id="customer_phone" x-model="checkoutData.phone" required
+                               class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:outline-none transition"
+                               placeholder="Enter your phone number">
+                    </div>
+                    <div>
+                        <label for="customer_email" class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Email (optional)</label>
+                        <input type="email" id="customer_email" x-model="checkoutData.email"
+                               class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:outline-none transition"
+                               placeholder="Enter your email">
+                    </div>
+                </div>
+                
+                <!-- Table Number for Dine In -->
+                <div x-show="checkoutData.orderType === 'dine_in'" class="mb-6">
+                    <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Table</label>
+                    <!-- Show table from QR code if available -->
+                    <template x-if="qrTable">
+                        <div class="w-full px-4 py-3 border rounded-xl flex items-center gap-2" style="background: var(--surface); border-color: var(--primary);">
+                            <svg class="w-5 h-5" style="color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span class="font-medium" style="color: var(--text-primary);" x-text="'Table ' + qrTable.number"></span>
+                        </div>
+                    </template>
+                    <!-- Show input field only if no table in QR code -->
+                    <template x-if="!qrTable">
+                        <input type="text" id="table_number" x-model="checkoutData.tableNumber"
+                               class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:outline-none transition"
+                               placeholder="Enter your table number">
+                    </template>
+                </div>
+                
+                <!-- Delivery Address for Delivery -->
+                <div x-show="checkoutData.orderType === 'delivery'" class="mb-6">
+                    <label for="delivery_address" class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Delivery Address *</label>
+                    <textarea id="delivery_address" x-model="checkoutData.deliveryAddress" rows="2"
+                              class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:outline-none transition resize-none"
+                              placeholder="Enter your delivery address"></textarea>
+                </div>
+                
+                <!-- Special Instructions -->
+                <div class="mb-6">
+                    <label for="notes" class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Special Instructions</label>
+                    <textarea id="notes" x-model="checkoutData.notes" rows="2"
+                              class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:outline-none transition resize-none"
+                              placeholder="Any special requests..."></textarea>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="rounded-xl p-4 mb-6" style="background: var(--surface);">
+                    <h3 class="font-semibold mb-3" style="color: var(--text-primary);">Order Summary</h3>
+                    <template x-for="(item, index) in cart" :key="index">
+                        <div class="flex justify-between text-sm py-1">
+                            <span x-text="item.quantity + 'x ' + item.name" style="color: var(--text-secondary);"></span>
+                            <span x-text="currencySymbol + (item.price * item.quantity).toFixed(2)" style="color: var(--text-primary);"></span>
+                        </div>
+                    </template>
+                    <div class="border-t mt-3 pt-3 flex justify-between font-bold" style="border-color: var(--background);">
+                        <span style="color: var(--text-primary);">Total</span>
+                        <span style="color: var(--primary);" x-text="currencySymbol + cartTotal.toFixed(2)"></span>
+                    </div>
+                </div>
+                
+                <!-- Error Message -->
+                <div x-show="checkoutError" x-cloak class="mb-4 p-3 rounded-xl bg-red-50 text-red-700 text-sm">
+                    <span x-text="checkoutError"></span>
+                </div>
+                
+                <!-- Submit Button -->
+                <button @click="submitOrder()" 
+                        :disabled="isSubmitting || !checkoutData.name || !checkoutData.phone || (checkoutData.orderType === 'delivery' && !checkoutData.deliveryAddress)"
+                        class="w-full py-4 rounded-xl text-lg font-semibold text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style="background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--secondary)));">
+                    <span x-show="!isSubmitting">Place Order</span>
+                    <span x-show="isSubmitting" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Success Modal -->
+    <div x-show="orderSuccess" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative bg-white w-full max-w-md rounded-2xl p-8 text-center shadow-2xl"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             style="background: var(--background);">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style="background: var(--surface);">
+                <svg class="w-10 h-10" style="color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h2 class="font-heading text-2xl font-bold mb-2" style="color: var(--text-primary);">Order Placed!</h2>
+            <p class="mb-2" style="color: var(--text-secondary);">Your order has been received.</p>
+            <p class="text-sm mb-6" style="color: var(--text-secondary);">
+                Order #<span x-text="orderNumber" class="font-mono font-bold"></span>
+            </p>
+            <button @click="orderSuccess = false; resetCheckout()" 
+                    class="px-8 py-3 rounded-xl font-semibold text-white transition hover:opacity-90"
+                    style="background: var(--primary);">
+                Done
+            </button>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="py-8 border-t" style="background: var(--surface); border-color: var(--surface);">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            {% if restaurant.phone or restaurant.email %}
+            <div class="flex flex-wrap items-center justify-center gap-6 mb-6">
+                {% if restaurant.phone %}
+                <a href="tel:{{ restaurant.phone }}" class="flex items-center gap-2 text-sm hover:opacity-80 transition" style="color: var(--text-secondary);">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    {{ restaurant.phone }}
+                </a>
+                {% endif %}
+                {% if restaurant.email %}
+                <a href="mailto:{{ restaurant.email }}" class="flex items-center gap-2 text-sm hover:opacity-80 transition" style="color: var(--text-secondary);">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    {{ restaurant.email }}
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <p class="text-sm opacity-60" style="color: var(--text-secondary);">
+                © {{ restaurant.name }} · Powered by <a href="/" class="hover:underline" style="color: var(--primary);">Digital Menu</a>
+            </p>
+        </div>
+    </footer>
+    
+    {% if theme.custom_footer_html %}
+    {{ theme.custom_footer_html|safe }}
+    {% endif %}
+    
+    <script>
+        function menuApp() {
+            return {
+                cart: [],
+                showCart: false,
+                showCheckout: false,
+                selectedItem: null,
+                itemQuantity: 1,
+                searchQuery: '',
+                activeCategory: null,
+                currencySymbol: '{{ currency_symbol|default:"$" }}',
+                orderingEnabled: {{ ordering_enabled|yesno:"true,false" }},
+                
+                // Table info from QR code
+                qrTable: {% if table %}{ id: '{{ table.id }}', number: '{{ table.number }}', name: '{{ table.name|default:table.number }}' }{% else %}null{% endif %},
+                
+                // Checkout state
+                checkoutData: {
+                    orderType: 'dine_in',
+                    name: '',
+                    phone: '',
+                    email: '',
+                    tableId: '{{ table.id|default:"" }}',
+                    tableNumber: '{{ table.number|default:"" }}',
+                    deliveryAddress: '',
+                    notes: ''
+                },
+                isSubmitting: false,
+                checkoutError: '',
+                orderSuccess: false,
+                orderNumber: '',
+                
+                init() {
+                    // Initialize AOS
+                    AOS.init({
+                        duration: 600,
+                        once: true,
+                        offset: 50,
+                    });
+                    
+                    // Load cart from localStorage (only if ordering enabled)
+                    if (this.orderingEnabled) {
+                        const savedCart = localStorage.getItem('menu_cart_{{ restaurant.id }}');
+                        if (savedCart) {
+                            this.cart = JSON.parse(savedCart);
+                        }
+                    }
+                    
+                    // Setup intersection observer for category highlighting
+                    this.setupCategoryObserver();
+                },
+                
+                setupCategoryObserver() {
+                    const sections = document.querySelectorAll('.category-section');
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                this.activeCategory = entry.target.dataset.categoryId;
+                            }
+                        });
+                    }, { threshold: 0.3, rootMargin: '-20% 0px -60% 0px' });
+                    
+                    sections.forEach(section => observer.observe(section));
+                },
+                
+                scrollToCategory(id) {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                },
+                
+                scrollToTop() {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+                
+                matchesSearch(name, description) {
+                    if (!this.searchQuery) return true;
+                    const query = this.searchQuery.toLowerCase();
+                    return name.toLowerCase().includes(query) || 
+                           (description && description.toLowerCase().includes(query));
+                },
+                
+                openItemModal(id, name, description, price, image, isPopular) {
+                    this.selectedItem = { id, name, description, price: parseFloat(price), image, is_popular: isPopular };
+                    this.itemQuantity = 1;
+                },
+                
+                addToCart() {
+                    if (!this.orderingEnabled) return;
+                    const existing = this.cart.find(i => i.id === this.selectedItem.id);
+                    if (existing) {
+                        existing.quantity += this.itemQuantity;
+                    } else {
+                        this.cart.push({
+                            ...this.selectedItem,
+                            quantity: this.itemQuantity
+                        });
+                    }
+                    this.saveCart();
+                    this.selectedItem = null;
+                },
+                
+                updateCartQuantity(index, delta) {
+                    this.cart[index].quantity += delta;
+                    if (this.cart[index].quantity <= 0) {
+                        this.removeFromCart(index);
+                    } else {
+                        this.saveCart();
+                    }
+                },
+                
+                removeFromCart(index) {
+                    this.cart.splice(index, 1);
+                    this.saveCart();
+                },
+                
+                saveCart() {
+                    localStorage.setItem('menu_cart_{{ restaurant.id }}', JSON.stringify(this.cart));
+                },
+                
+                formatPrice(price) {
+                    return this.currencySymbol + parseFloat(price).toFixed(2);
+                },
+                
+                get cartTotal() {
+                    return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                },
+                
+                async submitOrder() {
+                    this.isSubmitting = true;
+                    this.checkoutError = '';
+                    
+                    try {
+                        // Prepare order items
+                        const items = this.cart.map(item => ({
+                            menu_item_id: item.id,
+                            quantity: item.quantity,
+                            special_instructions: ''
+                        }));
+                        
+                        // Prepare order data
+                        const orderData = {
+                            location_id: '{{ qr_code.location.id|default:"" }}' || null,
+                            order_type: this.checkoutData.orderType,
+                            customer_name: this.checkoutData.name,
+                            customer_phone: this.checkoutData.phone,
+                            customer_email: this.checkoutData.email,
+                            notes: this.checkoutData.notes,
+                            items: items
+                        };
+                        
+                        // Add delivery address if delivery
+                        if (this.checkoutData.orderType === 'delivery') {
+                            orderData.delivery_address = this.checkoutData.deliveryAddress;
+                        }
+                        
+                        // Add table info if dine-in
+                        if (this.checkoutData.orderType === 'dine_in') {
+                            // Use table from QR code if available, otherwise use manual input
+                            if (this.qrTable) {
+                                orderData.table_id = this.qrTable.id;
+                            } else if (this.checkoutData.tableNumber) {
+                                orderData.notes = `Table: ${this.checkoutData.tableNumber}. ${orderData.notes}`;
+                            }
+                        }
+                        
+                        // Submit order to public API endpoint
+                        const response = await fetch('/api/v1/orders/public/{{ restaurant.slug }}/order/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCsrfToken()
+                            },
+                            body: JSON.stringify(orderData)
+                        });
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.detail || errorData.message || 'Failed to place order');
+                        }
+                        
+                        const result = await response.json();
+                        
+                        // Success!
+                        this.orderNumber = result.order_number || result.id?.slice(0, 8).toUpperCase() || 'N/A';
+                        this.orderSuccess = true;
+                        this.showCheckout = false;
+                        
+                        // Clear cart
+                        this.cart = [];
+                        this.saveCart();
+                        
+                    } catch (error) {
+                        console.error('Order error:', error);
+                        this.checkoutError = error.message || 'Something went wrong. Please try again.';
+                    } finally {
+                        this.isSubmitting = false;
+                    }
+                },
+                
+                getCsrfToken() {
+                    const name = 'csrftoken';
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                },
+                
+                resetCheckout() {
+                    this.checkoutData = {
+                        orderType: 'dine_in',
+                        name: '',
+                        phone: '',
+                        email: '',
+                        tableId: this.qrTable ? this.qrTable.id : '',
+                        tableNumber: this.qrTable ? this.qrTable.number : '',
+                        deliveryAddress: '',
+                        notes: ''
+                    };
+                    this.checkoutError = '';
+                }
+            };
+        }
+    </script>
+</body>
+</html>

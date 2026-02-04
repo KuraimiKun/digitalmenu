@@ -1,0 +1,494 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Theme Customization - {{ restaurant.name }}{% endblock %}
+
+{% block page_title %}Theme Customization{% endblock %}
+
+{% block content %}
+<div x-data="themeCustomizer()" class="space-y-6">
+    
+    <!-- Header with Preview Button -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Customize Your Menu Theme</h2>
+            <p class="text-gray-600">Personalize how your digital menu looks to customers</p>
+        </div>
+        <div class="flex gap-3">
+            {% if qr_code %}
+            <a href="/m/{{ qr_code.short_code }}/" target="_blank" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Preview Menu
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Presets</h3>
+        <p class="text-sm text-gray-600 mb-4">Start with a pre-designed theme and customize from there</p>
+        
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {% for preset in presets %}
+            <form method="post" class="contents">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="apply_preset">
+                <input type="hidden" name="preset" value="{{ preset.id }}">
+                <button type="submit" 
+                        class="p-4 rounded-xl border-2 hover:border-primary-500 hover:shadow-md transition text-center {% if theme.preset_name == preset.id %}border-primary-500 bg-primary-50{% else %}border-gray-200{% endif %}">
+                    <span class="text-2xl block mb-2">{{ preset.icon }}</span>
+                    <span class="text-sm font-medium">{{ preset.name }}</span>
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Left Column: Settings -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Layout & Style -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                        </svg>
+                        Layout & Style
+                    </h3>
+                    
+                    <div class="grid sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Layout Style</label>
+                            <select name="layout_style" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                {% for value, label in layout_styles %}
+                                <option value="{{ value }}" {% if theme.layout_style == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Header Style</label>
+                            <select name="header_style" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                {% for value, label in header_styles %}
+                                <option value="{{ value }}" {% if theme.header_style == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Card Style</label>
+                            <select name="card_style" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                {% for value, label in card_styles %}
+                                <option value="{{ value }}" {% if theme.card_style == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colors -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                        </svg>
+                        Color Palette
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <!-- Primary Colors -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="primary_color" value="{{ theme.primary_color }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.primary_color }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="secondary_color" value="{{ theme.secondary_color }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.secondary_color }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="accent_color" value="{{ theme.accent_color }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.accent_color }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                        
+                        <!-- Background Colors -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Background</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="background_color" value="{{ theme.background_color }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.background_color }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Surface</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="surface_color" value="{{ theme.surface_color }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.surface_color }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Card Background</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="card_background" value="{{ theme.card_background }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.card_background }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                        
+                        <!-- Text Colors -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Primary</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="text_primary" value="{{ theme.text_primary }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.text_primary }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Secondary</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="text_secondary" value="{{ theme.text_secondary }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.text_secondary }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text on Primary</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="text_on_primary" value="{{ theme.text_on_primary }}"
+                                       class="w-10 h-10 rounded cursor-pointer border-0">
+                                <input type="text" value="{{ theme.text_on_primary }}" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                       oninput="this.previousElementSibling.value = this.value">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typography -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/>
+                        </svg>
+                        Typography
+                    </h3>
+                    
+                    <div class="grid sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Heading Font</label>
+                            <select name="heading_font" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                {% for font in font_options %}
+                                <option value="{{ font }}" {% if theme.heading_font == font %}selected{% endif %}>{{ font }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Body Font</label>
+                            <select name="body_font" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                {% for font in font_options %}
+                                <option value="{{ font }}" {% if theme.body_font == font %}selected{% endif %}>{{ font }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Price Font</label>
+                            <select name="price_font" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                {% for font in font_options %}
+                                <option value="{{ font }}" {% if theme.price_font == font %}selected{% endif %}>{{ font }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Border Radius</label>
+                        <select name="border_radius" 
+                                class="w-full sm:w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <option value="0" {% if theme.border_radius == '0' %}selected{% endif %}>None (Sharp)</option>
+                            <option value="0.25rem" {% if theme.border_radius == '0.25rem' %}selected{% endif %}>Small</option>
+                            <option value="0.5rem" {% if theme.border_radius == '0.5rem' %}selected{% endif %}>Medium</option>
+                            <option value="1rem" {% if theme.border_radius == '1rem' %}selected{% endif %}>Large</option>
+                            <option value="1.5rem" {% if theme.border_radius == '1.5rem' %}selected{% endif %}>Extra Large</option>
+                            <option value="9999px" {% if theme.border_radius == '9999px' %}selected{% endif %}>Fully Rounded</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Hero Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Hero Section
+                    </h3>
+                    
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Hero Image</label>
+                            {% if theme.hero_image %}
+                            <div class="mb-2">
+                                <img src="{{ theme.hero_image.url }}" class="h-24 w-full object-cover rounded-lg">
+                            </div>
+                            {% endif %}
+                            <input type="file" name="hero_image" accept="image/*"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700">
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Hero Height</label>
+                                <select name="hero_height" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                    <option value="40vh" {% if theme.hero_height == '40vh' %}selected{% endif %}>Small (40vh)</option>
+                                    <option value="50vh" {% if theme.hero_height == '50vh' %}selected{% endif %}>Medium (50vh)</option>
+                                    <option value="60vh" {% if theme.hero_height == '60vh' %}selected{% endif %}>Large (60vh)</option>
+                                    <option value="80vh" {% if theme.hero_height == '80vh' %}selected{% endif %}>Extra Large (80vh)</option>
+                                    <option value="100vh" {% if theme.hero_height == '100vh' %}selected{% endif %}>Full Screen (100vh)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Overlay Opacity: {{ theme.hero_overlay_opacity }}%</label>
+                                <input type="range" name="hero_overlay_opacity" 
+                                       min="0" max="80" value="{{ theme.hero_overlay_opacity }}"
+                                       class="w-full">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Hero Text Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" name="hero_text_color" value="{{ theme.hero_text_color }}"
+                                           class="w-10 h-10 rounded cursor-pointer border-0">
+                                    <input type="text" value="{{ theme.hero_text_color }}" 
+                                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                           oninput="this.previousElementSibling.value = this.value">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Display Options -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Display Options
+                    </h3>
+                    
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_prices" {% if theme.show_prices %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Prices</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_images" {% if theme.show_images %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Images</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_descriptions" {% if theme.show_descriptions %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Descriptions</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_dietary_badges" {% if theme.show_dietary_badges %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Dietary Badges</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_popular_badge" {% if theme.show_popular_badge %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Popular Badge</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_search" {% if theme.show_search %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Search Bar</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_category_images" {% if theme.show_category_images %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Category Images</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_social_links" {% if theme.show_social_links %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Social Links</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="show_contact_info" {% if theme.show_contact_info %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Show Contact Info</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Cart & Features -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Cart & Features
+                    </h3>
+                    
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="enable_cart" {% if theme.enable_cart %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Enable Cart</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="floating_cart_button" {% if theme.floating_cart_button %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Floating Cart Button</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="enable_animations" {% if theme.enable_animations %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Enable Animations</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="enable_smooth_scroll" {% if theme.enable_smooth_scroll %}checked{% endif %}
+                                   class="w-5 h-5 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Smooth Scrolling</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Custom CSS -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        </svg>
+                        Custom CSS (Advanced)
+                    </h3>
+                    <textarea name="custom_css" rows="6" 
+                              placeholder="/* Add your custom CSS here */"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">{{ theme.custom_css }}</textarea>
+                    <p class="text-xs text-gray-500 mt-2">Add custom CSS to further customize your menu appearance. Use with caution.</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Preview -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-4 space-y-4">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">Color Preview</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">Primary</span>
+                                <div class="w-16 h-8 rounded" style="background: {{ theme.primary_color }};"></div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">Secondary</span>
+                                <div class="w-16 h-8 rounded" style="background: {{ theme.secondary_color }};"></div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">Accent</span>
+                                <div class="w-16 h-8 rounded" style="background: {{ theme.accent_color }};"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mini Menu Preview -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 text-center" style="background: linear-gradient(135deg, {{ theme.primary_color }}, {{ theme.secondary_color }});">
+                            <p class="text-white font-semibold" style="font-family: '{{ theme.heading_font }}', serif;">{{ restaurant.name }}</p>
+                            <p class="text-white text-sm opacity-75">Menu Preview</p>
+                        </div>
+                        <div class="p-4 space-y-3" style="background: {{ theme.background_color }};">
+                            <div class="p-3 rounded-lg" style="background: {{ theme.card_background }}; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-radius: {{ theme.border_radius }};">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-medium" style="color: {{ theme.text_primary }}; font-family: '{{ theme.body_font }}', sans-serif;">Sample Item</h4>
+                                        <p class="text-xs mt-1" style="color: {{ theme.text_secondary }};">A delicious dish...</p>
+                                    </div>
+                                    <span class="text-sm font-bold px-2 py-1 rounded" style="background: {{ theme.primary_color }}; color: {{ theme.text_on_primary }}; font-family: '{{ theme.price_font }}', sans-serif;">$12.99</span>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-lg" style="background: {{ theme.card_background }}; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-radius: {{ theme.border_radius }};">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-medium" style="color: {{ theme.text_primary }}; font-family: '{{ theme.body_font }}', sans-serif;">Another Item</h4>
+                                        <p class="text-xs mt-1" style="color: {{ theme.text_secondary }};">Fresh ingredients...</p>
+                                    </div>
+                                    <span class="text-sm font-bold px-2 py-1 rounded" style="background: {{ theme.primary_color }}; color: {{ theme.text_on_primary }}; font-family: '{{ theme.price_font }}', sans-serif;">$9.99</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if qr_code %}
+                    <a href="/m/{{ qr_code.short_code }}/" target="_blank" 
+                       class="block text-center py-3 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium">
+                        Open Full Preview →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex justify-end">
+            <button type="submit" 
+                    class="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-semibold shadow-lg hover:shadow-xl">
+                Save Theme Settings
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function themeCustomizer() {
+    return {
+        // Add any reactive functionality here
+    }
+}
+</script>
+{% endblock %}

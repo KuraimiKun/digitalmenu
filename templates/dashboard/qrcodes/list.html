@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}QR Codes - Digital Menu{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100">
+    {% include 'dashboard/partials/sidebar.html' %}
+    
+    <div class="lg:pl-64">
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-8">
+            <h1 class="text-xl font-semibold text-gray-900">QR Codes</h1>
+            <a href="{% url 'qrcode-create' %}" class="bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-600 flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Create QR Code
+            </a>
+        </header>
+        
+        {% if messages %}
+        <div class="px-4 lg:px-8 pt-4">
+            {% for message in messages %}
+            <div class="mb-2 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <main class="p-4 lg:p-8">
+            {% if qrcodes %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for qr in qrcodes %}
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ qr.name }}</h3>
+                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {% if qr.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                {% if qr.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                        
+                        <!-- QR Code Preview -->
+                        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-center mb-4">
+                            {% if qr.qr_image %}
+                            <img src="{{ qr.qr_image.url }}" alt="{{ qr.name }}" class="w-32 h-32">
+                            {% else %}
+                            <div class="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
+                                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <dl class="space-y-2 text-sm">
+                            {% if qr.table %}
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Table</dt>
+                                <dd class="font-medium text-gray-900">Table {{ qr.table.number }}</dd>
+                            </div>
+                            {% endif %}
+                            {% if qr.location %}
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Location</dt>
+                                <dd class="font-medium text-gray-900">{{ qr.location.name }}</dd>
+                            </div>
+                            {% endif %}
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Scans</dt>
+                                <dd class="font-medium text-gray-900">{{ qr.scan_count|default:0 }}</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Created</dt>
+                                <dd class="font-medium text-gray-900">{{ qr.created_at|date:"M d, Y" }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                    
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between">
+                        {% if qr.qr_image %}
+                        <a href="{{ qr.qr_image.url }}" download="{{ qr.name }}.png" class="text-primary-500 hover:text-primary-600 text-sm font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Download
+                        </a>
+                        {% endif %}
+                        <a href="/m/{{ qr.short_code }}" target="_blank" class="text-gray-500 hover:text-gray-700 text-sm font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                            Preview
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl shadow-sm p-8 text-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">No QR codes yet</h2>
+                <p class="text-gray-600 mb-4">Create QR codes for tables to enable easy menu access.</p>
+                <a href="{% url 'qrcode-create' %}" class="inline-flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-medium">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create Your First QR Code
+                </a>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}
