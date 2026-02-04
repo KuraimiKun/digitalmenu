@@ -34,6 +34,10 @@ urlpatterns = [
     # QR Code management
     path('dashboard/qrcodes/', dashboard_views.qrcode_list, name='qrcode-list'),
     path('dashboard/qrcodes/create/', dashboard_views.qrcode_create, name='qrcode-create'),
+    path('dashboard/qrcodes/bulk-action/', dashboard_views.qrcode_bulk_action, name='qrcode-bulk-action'),
+    path('dashboard/qrcodes/<uuid:qrcode_id>/toggle/', dashboard_views.qrcode_toggle_status, name='qrcode-toggle'),
+    path('dashboard/qrcodes/<uuid:qrcode_id>/delete/', dashboard_views.qrcode_delete, name='qrcode-delete'),
+    path('dashboard/qrcodes/<uuid:qrcode_id>/regenerate/', dashboard_views.qrcode_regenerate, name='qrcode-regenerate'),
     
     # Location management
     path('dashboard/locations/', dashboard_views.location_list, name='location-list'),

@@ -546,9 +546,9 @@ def order_update_status(request, order_id):
 # QR Code Management Views
 @login_required
 def qrcode_list(request):
-    """List QR codes for the selected restaurant."""
+    """List QR codes for the selected restaurant with filtering and stats."""
     from apps.qrcodes.models import QRCode
-    from apps.restaurants.models import Restaurant
+    from apps.restaurants.models import Restaurant, Location, Table
     
     restaurant_id = request.session.get('selected_restaurant_id')
     if not restaurant_id:
@@ -556,15 +556,162 @@ def qrcode_list(request):
         return redirect('restaurant-create')
     
     restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+    
+    # Base queryset
     qr_codes = QRCode.objects.filter(restaurant=restaurant).select_related(
         'menu', 'location', 'table'
-    ).order_by('-created_at')
+    )
+    
+    # Filters
+    search = request.GET.get('search', '').strip()
+    qr_type = request.GET.get('type', '')
+    location_id = request.GET.get('location', '')
+    status = request.GET.get('status', '')
+    
+    if search:
+        qr_codes = qr_codes.filter(
+            Q(name__icontains=search) | 
+            Q(short_code__icontains=search) |
+            Q(table__number__icontains=search)
+        )
+    
+    if qr_type:
+        qr_codes = qr_codes.filter(qr_type=qr_type)
+    
+    if location_id:
+        qr_codes = qr_codes.filter(location_id=location_id)
+    
+    if status == 'active':
+        qr_codes = qr_codes.filter(is_active=True)
+    elif status == 'inactive':
+        qr_codes = qr_codes.filter(is_active=False)
+    
+    qr_codes = qr_codes.order_by('-created_at')
+    
+    # Get stats
+    all_qr_codes = QRCode.objects.filter(restaurant=restaurant)
+    stats = {
+        'total': all_qr_codes.count(),
+        'active': all_qr_codes.filter(is_active=True).count(),
+        'inactive': all_qr_codes.filter(is_active=False).count(),
+        'total_scans': all_qr_codes.aggregate(total=Sum('scan_count'))['total'] or 0,
+    }
+    
+    # Get available locations and QR types for filters
+    locations = Location.objects.filter(restaurant=restaurant)
+    qr_types = QRCode.TYPE_CHOICES
     
     context = {
         'restaurant': restaurant,
         'qrcodes': qr_codes,
+        'stats': stats,
+        'locations': locations,
+        'qr_types': qr_types,
+        'filters': {
+            'search': search,
+            'type': qr_type,
+            'location': location_id,
+            'status': status,
+        }
     }
     return render(request, 'dashboard/qrcodes/list.html', context)
+
+
+@login_required
+def qrcode_toggle_status(request, qrcode_id):
+    """Toggle QR code active status."""
+    from apps.qrcodes.models import QRCode
+    
+    if request.method == 'POST':
+        qr_code = get_object_or_404(QRCode, id=qrcode_id)
+        qr_code.is_active = not qr_code.is_active
+        qr_code.save()
+        status_text = 'activated' if qr_code.is_active else 'deactivated'
+        messages.success(request, f'QR Code "{qr_code.name}" {status_text}.')
+    
+    return redirect('qrcode-list')
+
+
+@login_required
+def qrcode_delete(request, qrcode_id):
+    """Delete a QR code."""
+    from apps.qrcodes.models import QRCode
+    
+    if request.method == 'POST':
+        qr_code = get_object_or_404(QRCode, id=qrcode_id)
+        name = qr_code.name
+        qr_code.delete()
+        messages.success(request, f'QR Code "{name}" deleted.')
+    
+    return redirect('qrcode-list')
+
+
+@login_required
+def qrcode_regenerate(request, qrcode_id):
+    """Regenerate QR code image."""
+    from apps.qrcodes.models import QRCode
+    
+    if request.method == 'POST':
+        qr_code = get_object_or_404(QRCode, id=qrcode_id)
+        try:
+            qr_code.generate_qr_image()
+            qr_code.save()
+            messages.success(request, f'QR Code "{qr_code.name}" regenerated.')
+        except Exception as e:
+            messages.error(request, f'Failed to regenerate QR code: {e}')
+    
+    return redirect('qrcode-list')
+
+
+@login_required
+def qrcode_bulk_action(request):
+    """Handle bulk actions on QR codes."""
+    from apps.qrcodes.models import QRCode
+    import zipfile
+    from io import BytesIO
+    from django.http import HttpResponse
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        qrcode_ids = request.POST.getlist('qrcode_ids')
+        
+        if not qrcode_ids:
+            messages.warning(request, 'Please select at least one QR code.')
+            return redirect('qrcode-list')
+        
+        qr_codes = QRCode.objects.filter(id__in=qrcode_ids)
+        
+        if action == 'activate':
+            count = qr_codes.update(is_active=True)
+            messages.success(request, f'{count} QR code(s) activated.')
+        
+        elif action == 'deactivate':
+            count = qr_codes.update(is_active=False)
+            messages.success(request, f'{count} QR code(s) deactivated.')
+        
+        elif action == 'delete':
+            count = qr_codes.count()
+            qr_codes.delete()
+            messages.success(request, f'{count} QR code(s) deleted.')
+        
+        elif action == 'download':
+            # Create ZIP file with all QR codes
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for qr in qr_codes:
+                    if qr.qr_image:
+                        try:
+                            filename = f"{qr.name.replace(' ', '_')}_{qr.short_code}.png"
+                            zip_file.writestr(filename, qr.qr_image.read())
+                        except Exception:
+                            pass
+            
+            zip_buffer.seek(0)
+            response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="qr_codes.zip"'
+            return response
+    
+    return redirect('qrcode-list')
 
 
 @login_required
@@ -591,6 +738,37 @@ def qrcode_create(request):
         menu_id = request.POST.get('menu')
         location_id = request.POST.get('location')
         table_id = request.POST.get('table')
+        is_active = request.POST.get('is_active') == '1'
+        
+        # WiFi specific fields
+        wifi_ssid = request.POST.get('wifi_ssid', '')
+        wifi_password = request.POST.get('wifi_password', '')
+        wifi_encryption = request.POST.get('wifi_encryption', 'WPA')
+        
+        # Custom URL field
+        custom_url = request.POST.get('custom_url', '')
+        
+        # Validation
+        if not name:
+            messages.error(request, 'QR code name is required.')
+            return render(request, 'dashboard/qrcodes/create.html', {
+                'restaurant': restaurant, 'menus': menus, 
+                'locations': locations, 'tables': tables
+            })
+        
+        if qr_type == 'wifi' and not wifi_ssid:
+            messages.error(request, 'WiFi network name (SSID) is required.')
+            return render(request, 'dashboard/qrcodes/create.html', {
+                'restaurant': restaurant, 'menus': menus, 
+                'locations': locations, 'tables': tables
+            })
+        
+        if qr_type == 'custom' and not custom_url:
+            messages.error(request, 'Custom URL is required.')
+            return render(request, 'dashboard/qrcodes/create.html', {
+                'restaurant': restaurant, 'menus': menus, 
+                'locations': locations, 'tables': tables
+            })
         
         # Generate short code (6 bytes = 8 chars base64, truncate to 10)
         short_code = secrets.token_urlsafe(6)[:10]
@@ -599,10 +777,15 @@ def qrcode_create(request):
             restaurant=restaurant,
             short_code=short_code,
             qr_type=qr_type,
-            name=name or f'{qr_type.title()} QR',
+            name=name,
             menu_id=menu_id if menu_id else None,
             location_id=location_id if location_id else None,
             table_id=table_id if table_id else None,
+            is_active=is_active,
+            wifi_ssid=wifi_ssid,
+            wifi_password=wifi_password,
+            wifi_encryption=wifi_encryption,
+            custom_url=custom_url,
         )
         
         # Generate QR code image

@@ -3,18 +3,41 @@
 {% block title %}QR Codes - Digital Menu{% endblock %}
 
 {% block body %}
-<div class="min-h-screen bg-gray-100">
+<div class="min-h-screen bg-gray-100" x-data="qrCodeManager()">
     {% include 'dashboard/partials/sidebar.html' %}
     
     <div class="lg:pl-64">
+        <!-- Header -->
         <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-8">
-            <h1 class="text-xl font-semibold text-gray-900">QR Codes</h1>
-            <a href="{% url 'qrcode-create' %}" class="bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-600 flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Create QR Code
-            </a>
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-semibold text-gray-900">QR Codes</h1>
+                <span class="text-sm text-gray-500">({{ stats.total }} total)</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- View Toggle -->
+                <div class="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
+                    <button @click="viewMode = 'grid'" 
+                            :class="viewMode === 'grid' ? 'bg-white shadow text-primary-600' : 'text-gray-500 hover:text-gray-700'"
+                            class="p-1.5 rounded-md transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                        </svg>
+                    </button>
+                    <button @click="viewMode = 'list'" 
+                            :class="viewMode === 'list' ? 'bg-white shadow text-primary-600' : 'text-gray-500 hover:text-gray-700'"
+                            class="p-1.5 rounded-md transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+                <a href="{% url 'qrcode-create' %}" class="bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-600 flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create QR Code
+                </a>
+            </div>
         </header>
         
         {% if messages %}
@@ -28,22 +51,177 @@
         {% endif %}
         
         <main class="p-4 lg:p-8">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Total QR Codes</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ stats.total }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Active</p>
+                            <p class="text-2xl font-bold text-green-600">{{ stats.active }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Inactive</p>
+                            <p class="text-2xl font-bold text-gray-600">{{ stats.inactive }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Total Scans</p>
+                            <p class="text-2xl font-bold text-purple-600">{{ stats.total_scans }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters and Bulk Actions -->
+            <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <!-- Filters -->
+                    <form method="get" class="flex flex-wrap items-center gap-3">
+                        <!-- Search -->
+                        <div class="relative">
+                            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <input type="text" name="search" value="{{ filters.search }}" placeholder="Search QR codes..."
+                                   class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-48">
+                        </div>
+                        
+                        <!-- Type Filter -->
+                        <select name="type" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">All Types</option>
+                            {% for type_value, type_label in qr_types %}
+                            <option value="{{ type_value }}" {% if filters.type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <!-- Location Filter -->
+                        <select name="location" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">All Locations</option>
+                            {% for location in locations %}
+                            <option value="{{ location.id }}" {% if filters.location == location.id|stringformat:"s" %}selected{% endif %}>{{ location.name }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <!-- Status Filter -->
+                        <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">All Status</option>
+                            <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                        
+                        <button type="submit" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 font-medium">
+                            Filter
+                        </button>
+                        
+                        {% if filters.search or filters.type or filters.location or filters.status %}
+                        <a href="{% url 'qrcode-list' %}" class="text-sm text-gray-500 hover:text-gray-700">Clear</a>
+                        {% endif %}
+                    </form>
+                    
+                    <!-- Bulk Actions (shown when items selected) -->
+                    <div x-show="selectedIds.length > 0" x-cloak class="flex items-center gap-2">
+                        <span class="text-sm text-gray-600" x-text="`${selectedIds.length} selected`"></span>
+                        <form method="post" action="{% url 'qrcode-bulk-action' %}" id="bulkActionForm">
+                            {% csrf_token %}
+                            <template x-for="id in selectedIds" :key="id">
+                                <input type="hidden" name="qrcode_ids" :value="id">
+                            </template>
+                            <div class="flex items-center gap-2">
+                                <button type="submit" name="action" value="activate" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 font-medium">
+                                    Activate
+                                </button>
+                                <button type="submit" name="action" value="deactivate" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 font-medium">
+                                    Deactivate
+                                </button>
+                                <button type="submit" name="action" value="download" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 font-medium">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    Download ZIP
+                                </button>
+                                <button type="submit" name="action" value="delete" onclick="return confirm('Delete selected QR codes?')" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 font-medium">
+                                    Delete
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
             {% if qrcodes %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Select All -->
+            <div class="flex items-center justify-between mb-4">
+                <label class="flex items-center text-sm text-gray-600 cursor-pointer">
+                    <input type="checkbox" @change="toggleSelectAll($event)" 
+                           :checked="selectedIds.length === {{ qrcodes|length }}"
+                           class="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500 mr-2">
+                    Select all
+                </label>
+                <p class="text-sm text-gray-500">Showing {{ qrcodes|length }} QR code(s)</p>
+            </div>
+            
+            <!-- Grid View -->
+            <div x-show="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {% for qr in qrcodes %}
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div class="p-6">
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden group hover:shadow-md transition-shadow"
+                     :class="selectedIds.includes('{{ qr.id }}') && 'ring-2 ring-primary-500'">
+                    <!-- Selection checkbox -->
+                    <div class="absolute top-3 left-3 z-10">
+                        <input type="checkbox" 
+                               @change="toggleSelect('{{ qr.id }}')"
+                               :checked="selectedIds.includes('{{ qr.id }}')"
+                               class="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500 opacity-0 group-hover:opacity-100 checked:opacity-100 transition-opacity cursor-pointer">
+                    </div>
+                    
+                    <div class="p-6 relative">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">{{ qr.name }}</h3>
-                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {% if qr.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            <h3 class="text-lg font-semibold text-gray-900 truncate pr-2">{{ qr.name }}</h3>
+                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full shrink-0 {% if qr.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
                                 {% if qr.is_active %}Active{% else %}Inactive{% endif %}
                             </span>
                         </div>
                         
                         <!-- QR Code Preview -->
-                        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-center mb-4">
-                            {% if qr.qr_image %}
-                            <img src="{{ qr.qr_image.url }}" alt="{{ qr.name }}" class="w-32 h-32">
+                        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-center mb-4 cursor-pointer"
+                             {% if qr.qr_image and qr.qr_image.name %}@click="showPreview('{{ qr.qr_image.url }}', '{{ qr.name }}', '{{ qr.short_code }}', '{{ qr.get_target_url }}')"{% endif %}>
+                            {% if qr.qr_image and qr.qr_image.name %}
+                            <img src="{{ qr.qr_image.url }}" alt="{{ qr.name }}" class="w-32 h-32 hover:scale-105 transition-transform">
                             {% else %}
                             <div class="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
                                 <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,6 +229,18 @@
                                 </svg>
                             </div>
                             {% endif %}
+                        </div>
+                        
+                        <!-- Type Badge -->
+                        <div class="mb-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if qr.qr_type == 'menu' %}bg-blue-100 text-blue-800
+                                {% elif qr.qr_type == 'table' %}bg-amber-100 text-amber-800
+                                {% elif qr.qr_type == 'wifi' %}bg-purple-100 text-purple-800
+                                {% elif qr.qr_type == 'review' %}bg-pink-100 text-pink-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ qr.get_qr_type_display }}
+                            </span>
                         </div>
                         
                         <dl class="space-y-2 text-sm">
@@ -63,7 +253,7 @@
                             {% if qr.location %}
                             <div class="flex justify-between">
                                 <dt class="text-gray-500">Location</dt>
-                                <dd class="font-medium text-gray-900">{{ qr.location.name }}</dd>
+                                <dd class="font-medium text-gray-900 truncate max-w-[120px]">{{ qr.location.name }}</dd>
                             </div>
                             {% endif %}
                             <div class="flex justify-between">
@@ -71,32 +261,187 @@
                                 <dd class="font-medium text-gray-900">{{ qr.scan_count|default:0 }}</dd>
                             </div>
                             <div class="flex justify-between">
-                                <dt class="text-gray-500">Created</dt>
-                                <dd class="font-medium text-gray-900">{{ qr.created_at|date:"M d, Y" }}</dd>
+                                <dt class="text-gray-500">Code</dt>
+                                <dd class="font-mono text-xs text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">{{ qr.short_code }}</dd>
                             </div>
                         </dl>
                     </div>
                     
-                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between">
-                        {% if qr.qr_image %}
-                        <a href="{{ qr.qr_image.url }}" download="{{ qr.name }}.png" class="text-primary-500 hover:text-primary-600 text-sm font-medium flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                            </svg>
-                            Download
-                        </a>
-                        {% endif %}
-                        <a href="/m/{{ qr.short_code }}" target="_blank" class="text-gray-500 hover:text-gray-700 text-sm font-medium flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                            </svg>
-                            Preview
-                        </a>
+                    <!-- Actions Footer -->
+                    <div class="px-6 py-3 bg-gray-50 border-t border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                {% if qr.qr_image and qr.qr_image.name %}
+                                <a href="{{ qr.qr_image.url }}" download="{{ qr.name }}.png" 
+                                   class="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors" title="Download">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                </a>
+                                {% endif %}
+                                <button @click="copyLink('{{ request.scheme }}://{{ request.get_host }}/m/{{ qr.short_code }}')"
+                                        class="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors" title="Copy Link">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                                    </svg>
+                                </button>
+                                <a href="/m/{{ qr.short_code }}" target="_blank"
+                                   class="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors" title="Preview">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                </a>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <form method="post" action="{% url 'qrcode-toggle' qr.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                                            title="{% if qr.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                        {% if qr.is_active %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                        </svg>
+                                        {% else %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'qrcode-regenerate' qr.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Regenerate">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'qrcode-delete' qr.id %}" onsubmit="return confirm('Delete this QR code?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
+            
+            <!-- List View -->
+            <div x-show="viewMode === 'list'" x-cloak class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="w-10 px-4 py-3"></th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">QR Code</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location / Table</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Scans</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for qr in qrcodes %}
+                        <tr class="hover:bg-gray-50" :class="selectedIds.includes('{{ qr.id }}') && 'bg-primary-50'">
+                            <td class="px-4 py-3">
+                                <input type="checkbox" 
+                                       @change="toggleSelect('{{ qr.id }}')"
+                                       :checked="selectedIds.includes('{{ qr.id }}')"
+                                       class="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500">
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center space-x-3">
+                                    {% if qr.qr_image and qr.qr_image.name %}
+                                    <img src="{{ qr.qr_image.url }}" alt="{{ qr.name }}" class="w-10 h-10 rounded cursor-pointer"
+                                         @click="showPreview('{{ qr.qr_image.url }}', '{{ qr.name }}', '{{ qr.short_code }}', '{{ qr.get_target_url }}')">
+                                    {% else %}
+                                    <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01"/>
+                                        </svg>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ qr.name }}</p>
+                                        <p class="text-xs text-gray-500 font-mono">{{ qr.short_code }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                    {% if qr.qr_type == 'menu' %}bg-blue-100 text-blue-800
+                                    {% elif qr.qr_type == 'table' %}bg-amber-100 text-amber-800
+                                    {% elif qr.qr_type == 'wifi' %}bg-purple-100 text-purple-800
+                                    {% elif qr.qr_type == 'review' %}bg-pink-100 text-pink-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ qr.get_qr_type_display }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600">
+                                {% if qr.location %}{{ qr.location.name }}{% endif %}
+                                {% if qr.table %}<span class="text-gray-400">/ Table {{ qr.table.number }}</span>{% endif %}
+                                {% if not qr.location and not qr.table %}—{% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ qr.scan_count|default:0 }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {% if qr.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {% if qr.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-500">{{ qr.created_at|date:"M d, Y" }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex items-center justify-end space-x-1">
+                                    {% if qr.qr_image and qr.qr_image.name %}
+                                    <a href="{{ qr.qr_image.url }}" download="{{ qr.name }}.png" 
+                                       class="p-1.5 text-gray-400 hover:text-primary-500 rounded" title="Download">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                        </svg>
+                                    </a>
+                                    {% endif %}
+                                    <button @click="copyLink('{{ request.scheme }}://{{ request.get_host }}/m/{{ qr.short_code }}')"
+                                            class="p-1.5 text-gray-400 hover:text-primary-500 rounded" title="Copy Link">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                    </button>
+                                    <a href="/m/{{ qr.short_code }}" target="_blank" class="p-1.5 text-gray-400 hover:text-primary-500 rounded" title="Preview">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                        </svg>
+                                    </a>
+                                    <form method="post" action="{% url 'qrcode-toggle' qr.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-1.5 text-gray-400 hover:text-amber-500 rounded" title="{% if qr.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{% if qr.is_active %}M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636{% else %}M9 12l2 2 4-4m6 2a9 9 0 11-18 0{% endif %}"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'qrcode-delete' qr.id %}" class="inline" onsubmit="return confirm('Delete?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-1.5 text-gray-400 hover:text-red-500 rounded" title="Delete">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
             {% else %}
+            <!-- Empty State -->
             <div class="bg-white rounded-xl shadow-sm p-8 text-center">
                 <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,5 +460,180 @@
             {% endif %}
         </main>
     </div>
+    
+    <!-- QR Code Preview Modal -->
+    <div x-show="previewModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="previewModal = false"></div>
+            
+            <div class="relative inline-block bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900" x-text="previewName"></h3>
+                        <button @click="previewModal = false" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-6 flex items-center justify-center mb-4">
+                        <img :src="previewImage" alt="QR Code" class="w-48 h-48">
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="text-sm text-gray-600">Short Code</span>
+                            <code class="text-sm font-mono bg-white px-2 py-1 rounded border" x-text="previewCode"></code>
+                        </div>
+                        
+                        <div class="p-3 bg-gray-50 rounded-lg">
+                            <span class="text-sm text-gray-600 block mb-2">Menu Link</span>
+                            <div class="flex items-center space-x-2">
+                                <input type="text" :value="previewUrl" readonly 
+                                       class="flex-1 text-sm bg-white border rounded px-3 py-2 font-mono text-gray-600">
+                                <button @click="copyLink(previewUrl)" 
+                                        class="px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 text-sm font-medium">
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex items-center justify-between">
+                        <a :href="previewImage" :download="previewName + '.png'" 
+                           class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Download PNG
+                        </a>
+                        <button @click="printQR()" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                            </svg>
+                            Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div x-show="toast" x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-2"
+         class="fixed bottom-4 right-4 z-50">
+        <div class="bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3">
+            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span x-text="toastMessage"></span>
+        </div>
+    </div>
 </div>
+
+<script>
+function qrCodeManager() {
+    return {
+        viewMode: 'grid',
+        selectedIds: [],
+        previewModal: false,
+        previewImage: '',
+        previewName: '',
+        previewCode: '',
+        previewUrl: '',
+        toast: false,
+        toastMessage: '',
+        
+        toggleSelect(id) {
+            const index = this.selectedIds.indexOf(id);
+            if (index > -1) {
+                this.selectedIds.splice(index, 1);
+            } else {
+                this.selectedIds.push(id);
+            }
+        },
+        
+        toggleSelectAll(event) {
+            if (event.target.checked) {
+                this.selectedIds = [{% for qr in qrcodes %}'{{ qr.id }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+            } else {
+                this.selectedIds = [];
+            }
+        },
+        
+        showPreview(image, name, code, url) {
+            this.previewImage = image;
+            this.previewName = name;
+            this.previewCode = code;
+            this.previewUrl = window.location.origin + '/m/' + code;
+            this.previewModal = true;
+        },
+        
+        copyLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                this.showToast('Link copied to clipboard!');
+            });
+        },
+        
+        showToast(message) {
+            this.toastMessage = message;
+            this.toast = true;
+            setTimeout(() => { this.toast = false; }, 3000);
+        },
+        
+        printQR() {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Print QR Code - ${this.previewName}</title>
+                    <style>
+                        body { 
+                            display: flex; 
+                            flex-direction: column;
+                            align-items: center; 
+                            justify-content: center; 
+                            min-height: 100vh;
+                            margin: 0;
+                            font-family: system-ui, sans-serif;
+                        }
+                        img { width: 300px; height: 300px; margin-bottom: 20px; }
+                        h2 { margin: 0 0 10px; font-size: 24px; }
+                        p { margin: 0; color: #666; font-size: 14px; }
+                    </style>
+                </head>
+                <body>
+                    <img src="${this.previewImage}" alt="QR Code">
+                    <h2>${this.previewName}</h2>
+                    <p>Scan to view menu</p>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        }
+    }
+}
+</script>
 {% endblock %}
